@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CyberScan</title>
+    <style>
+        body { background: #0a0a0a; color: #00ff00; font-family: monospace; text-align: center; }
+        .box { border: 2px solid #00ff00; width: 60%; margin: 50px auto; padding: 20px; box-shadow: 0 0 15px #00ff00; }
+        input { background: transparent; border: 1px solid #00ff00; color: #00ff00; padding: 10px; width: 250px; }
+        button { background: #00ff00; color: black; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; }
+        .result { margin-top: 20px; text-align: left; padding: 10px; }
+        .HIGH { color: red; } .MEDIUM { color: orange; } .LOW { color: cyan; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>> CYBER_SCANNER_PRO</h1>
+        <p>Enter Target (IP or Domain):</p>
+        <input type="text" id="target" placeholder="e.g. google.com">
+        <button onclick="runScan()">START SCAN</button>
+
+        <div id="status"></div>
+        <div id="results" class="result"></div>
+    </div>
+
+    <script>
+        async function runScan() {
+            const target = document.getElementById('target').value;
+            const resDiv = document.getElementById('results');
+            document.getElementById('status').innerText = "Scanning... please wait...";
+            resDiv.innerHTML = "";
+
+            const response = await fetch('/scan', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({target: target})
+            });
+
+            const data = await response.json();
+            document.getElementById('status').innerText = "";
+
+            if(data.status === "success") {
+                resDiv.innerHTML = `<h3>Report for ${data.ip}</h3>
+                                   <p>Risk Level: <span class="${data.risk}">${data.risk}</span></p><hr>`;
+                data.ports.forEach(p => {
+                    resDiv.innerHTML += `<p>[!] Port ${p.port} (${p.service}) is OPEN - <span class="${p.severity}">${p.severity} Risk</span></p>`;
+                });
+                if(data.ports.length === 0) resDiv.innerHTML += "<p>No open ports found. Secure!</p>";
+            } else {
+                resDiv.innerHTML = "Error: Invalid Host";
+            }
+        }
+    </script>
+</body>
+</html>
